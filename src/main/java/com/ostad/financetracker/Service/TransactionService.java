@@ -4,36 +4,53 @@ import com.ostad.financetracker.Model.Transaction;
 import com.ostad.financetracker.Repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
 
 @Service
 public class TransactionService {
-    private final TransactionRepository transactionRepository;
+    private final TransactionRepository repository;
 
-    public TransactionService(TransactionRepository transactionRepository) {
-        this.transactionRepository = transactionRepository;
+    private static final AtomicLong COUNTER = new AtomicLong(1);
+
+    public TransactionService(TransactionRepository repository) {
+        this.repository = repository;
     }
+
 
     public List<Transaction> getAllTransactions() {
-        return transactionRepository.findAll();
+        return new ArrayList<>(repository.findAll());
     }
-    public List<Transaction> getTransactionsByType(String type) {
-        return transactionRepository.findByTransactionTypeIgnoreCase(type.toLowerCase());
+
+
+    public Optional<Transaction> getTransactionById(String id) {
+        return repository.findAll().stream()
+                .filter(t -> t.getId().equals(id))
+                .findFirst();
     }
-    public Optional<Transaction> getTransactionById(Long transactionNo) {
-        return transactionRepository.findById(transactionNo);
+
+
+    public boolean deleteTransaction(String id) {
+        return repository.findAll().removeIf(t -> t.getId().equals(id));
     }
+
 
     public Transaction addTransaction(Transaction transaction) {
-        return transactionRepository.save(transaction);
-    }
-    public boolean deleteTransactionById(Long transactionNo) {
-        if (transactionRepository.existsById(transactionNo)) {
-            transactionRepository.deleteById(transactionNo);
-            return true;
+        if (transaction.getId() == null) {
+            transaction.setId(String.valueOf(COUNTER.getAndIncrement()));
         }
-        return false;
+        repository.save(transaction);
+        return transaction;
     }
 
+
+    public List<Transaction> getTransactionsByType(String type) {
+        return repository.findAll().stream()
+                .filter(t -> t.getType().equalsIgnoreCase(type))
+                .collect(Collectors.toList());
+    }
 }

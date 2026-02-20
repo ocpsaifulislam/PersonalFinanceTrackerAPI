@@ -2,7 +2,6 @@ package com.ostad.financetracker.Controller;
 
 import com.ostad.financetracker.Model.Transaction;
 import com.ostad.financetracker.Service.TransactionService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,40 +10,36 @@ import java.util.List;
 @RequestMapping("/api/transactions")
 public class TransactionController {
 
-    private final TransactionService transactionService;
+    private final TransactionService service;
 
-    public TransactionController(TransactionService transactionService) {
-        this.transactionService = transactionService;
+    public TransactionController(TransactionService service) {
+        this.service = service;
     }
+
 
     @GetMapping
-    public List<Transaction> getAllTransactions(@RequestParam(required = false) String type) {
+    public List<Transaction> getTransactions(@RequestParam(required = false) String type) {
         if (type != null) {
-            return transactionService.getTransactionsByType(type);
+            return service.getTransactionsByType(type);
         }
-        return transactionService.getAllTransactions();
+        return service.getAllTransactions();
     }
+
 
     @GetMapping("/{id}")
-    public ResponseEntity<Transaction> getById(@PathVariable Long id) {
-        return transactionService.getTransactionById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public Transaction getById(@PathVariable String id) {
+        return service.getTransactionById(id).orElse(null);
     }
+
 
     @PostMapping
-    public Transaction addTransaction(@RequestBody Transaction transaction) {
-        return transactionService.addTransaction(transaction);
+    public Transaction add(@RequestBody Transaction transaction) {
+        return service.addTransaction(transaction);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteTransactionById(@PathVariable Long id) {
-        boolean deleted = transactionService.deleteTransactionById(id);
 
-        if (deleted) {
-            return ResponseEntity.ok("Transaction deleted successfully");
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @DeleteMapping("/{id}")
+    public String delete(@PathVariable String id) {
+        return service.deleteTransaction(id) ? "Deleted successfully" : "Transaction not found";
     }
 }
